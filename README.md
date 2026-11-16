@@ -42,4 +42,4 @@ swiftlint lint --strict
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It has three jobs: **SwiftLint**, **Build + test** (GoalKit `swift build` / `swift test`), and **xcodebuild** (the app and iMessage extension for the iOS Simulator).
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It has four jobs: **SwiftLint**, **Build + test** (GoalKit `swift build` / `swift test` on macOS), **xcodebuild test** (GoalKit tests on iPhone 17 simulators running iOS 26.2 and 26.5), and **xcodebuild** (builds the app and iMessage extension for the iOS Simulator). Xcode is pinned via `XCODE_VERSION` in the workflow.
