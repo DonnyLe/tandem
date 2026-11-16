@@ -1,3 +1,8 @@
+<!--
+PR title must start with a type: feat, fix, docs, test, ci, refactor, perf, chore, or revert.
+Examples: "feat: add climbing goal template", "fix: streak resets at midnight", "ci: cache SPM builds".
+-->
+
 ## Closes
 
 <!-- Link the issue this PR resolves so it closes on merge, e.g. "Closes #12". Write "N/A" if there is none. -->
