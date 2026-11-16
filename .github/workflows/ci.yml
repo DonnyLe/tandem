@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Pinned so a runner image update can't break CI on its own. Bump on purpose.
+# Installed versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
+env:
+  XCODE_VERSION: '26.6'
+
+jobs:
+  swiftlint:
+    name: SwiftLint
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/realm/swiftlint:0.57.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint
+        run: swiftlint lint --strict --reporter github-actions-logging
+
+  test:
+    name: Build + test (GoalKit)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+      - name: Show toolchain
+        run: xcodebuild -version && swift --version
+      - name: Build
+        working-directory: Packages/GoalKit
+        run: swift build
+      - name: Test
+        working-directory: Packages/GoalKit
+        run: swift test
+
+  ios-test:
+    name: xcodebuild test (GoalKit, iOS ${{ matrix.os }})
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        # OS must match an installed simulator runtime exactly (e.g. 26.4.1, not 26.4).
+        # 26.2 is the oldest iOS runtime on the macos-26 image; 26.5 is the newest.
+        # Both support Foundation Models (iOS 26+).
+        os: ['26.2', '26.5']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+      - name: Show simulator runtimes
+        run: xcrun simctl list runtimes
+      - name: Test on iOS Simulator
+        working-directory: Packages/GoalKit
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -scheme GoalKit \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=${{ matrix.os }}' \
+            -derivedDataPath build \
+            test
+
+  xcodebuild:
+    name: xcodebuild (iOS app + iMessage extension)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+      - name: Show toolchain
+        run: xcodebuild -version
+      # Build only, so a generic destination is enough and doesn't depend on
+      # which simulators are installed. Device-specific runs are in ios-test.
+      - name: Build for iOS Simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Tandem.xcodeproj \
+            -scheme Tandem \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build

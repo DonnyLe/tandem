@@ -1,0 +1,42 @@
+included:
+  - Tandem
+  - MessagesExtension
+  - Packages/GoalKit/Sources
+  - Packages/GoalKit/Tests
+
+excluded:
+  - build
+  - Packages/GoalKit/.build
+
+disabled_rules:
+  - todo
+  - trailing_comma # Swift style here uses trailing commas in multi-line literals
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - sorted_first_last
+  - redundant_nil_coalescing
+  - unused_optional_binding
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_urls: true
+
+identifier_name:
+  min_length: 1
+
+type_body_length:
+  warning: 300
+
+file_length:
+  warning: 500
+
+function_body_length:
+  warning: 60
+
+# Model initializers mirror their stored properties.
+function_parameter_count:
+  warning: 10
+  error: 16
