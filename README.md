@@ -8,7 +8,8 @@ A shared goal tracker for two partners: an iOS app plus an iMessage extension. T
 Tandem.xcodeproj          Xcode project (iOS 17+, Swift 6)
 Tandem/                   iOS app (SwiftUI), starter screen
 MessagesExtension/        iMessage extension, starter view
-Packages/GoalKit/         Shared Swift package used by both targets
+Packages/GoalKit/         Shared logic (models, progress, payloads) used by both targets
+Packages/DesignSystem/    Shared UI: colors, fonts, spacing, components
 Config/                   iMessage extension Info.plist
 docs/SPEC.md              Product spec
 ```
@@ -28,11 +29,16 @@ Command-line build:
 xcodebuild -project Tandem.xcodeproj -scheme Tandem -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
 ```
 
-GoalKit tests (run on macOS):
+Package tests (run on macOS):
 
 ```bash
 cd Packages/GoalKit && swift test
+cd Packages/DesignSystem && swift test
 ```
+
+## Design system
+
+UI uses the tokens and components in `Packages/DesignSystem` (`Palette`, `Typography`, `Spacing`, `Radius`, `Card`, `ProgressRing`, …) instead of hard-coded values. Open `DesignSystemGallery.swift` in Xcode and use its preview to see everything in light and dark mode. The rules are in `CLAUDE.md`.
 
 Lint (config in `.swiftlint.yml`):
 
@@ -42,4 +48,4 @@ swiftlint lint --strict
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It has four jobs: **SwiftLint**, **Build + test** (GoalKit `swift build` / `swift test` on macOS), **xcodebuild test** (GoalKit tests on iPhone 17 simulators running iOS 26.2 and 26.5), and **xcodebuild** (builds the app and iMessage extension for the iOS Simulator). Xcode is pinned via `XCODE_VERSION` in the workflow.
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It has four jobs: **SwiftLint**, **Build + test** (`swift build` / `swift test` on macOS for GoalKit and DesignSystem), **xcodebuild test** (both packages' tests on iPhone 17 simulators running iOS 26.2 and 26.5), and **xcodebuild** (builds the app and iMessage extension for the iOS Simulator). Xcode is pinned via `XCODE_VERSION` in the workflow.

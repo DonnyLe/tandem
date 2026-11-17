@@ -27,8 +27,16 @@ jobs:
         run: swiftlint lint --strict --reporter github-actions-logging
 
   test:
-    name: Build + test (GoalKit)
+    name: Build + test (${{ matrix.package }})
     runs-on: macos-26
+    # One job per local package, so the steps aren't copied for each package and
+    # each package gets its own check on the PR. fail-fast: false keeps one
+    # package's failure from cancelling the other's run. To add a package, add
+    # its folder name under Packages/ here and in ios-test below.
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [GoalKit, DesignSystem]
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
@@ -37,14 +45,14 @@ jobs:
       - name: Show toolchain
         run: xcodebuild -version && swift --version
       - name: Build
-        working-directory: Packages/GoalKit
+        working-directory: Packages/${{ matrix.package }}
         run: swift build
       - name: Test
-        working-directory: Packages/GoalKit
+        working-directory: Packages/${{ matrix.package }}
         run: swift test
 
   ios-test:
-    name: xcodebuild test (GoalKit, iOS ${{ matrix.os }})
+    name: xcodebuild test (${{ matrix.package }}, iOS ${{ matrix.os }})
     runs-on: macos-26
     strategy:
       fail-fast: false
@@ -53,6 +61,12 @@ jobs:
         # 26.2 is the oldest iOS runtime on the macos-26 image; 26.5 is the newest.
         # Both support Foundation Models (iOS 26+).
         os: ['26.2', '26.5']
+        # Every package runs on every OS above: 2 x 2 = 4 macOS jobs, each booting
+        # its own simulator. Minutes are free while the repo is public, but the
+        # free plan runs only about 5 macOS jobs at once, so extra jobs queue.
+        # If CI gets slow, test packages with no OS-specific behavior (like
+        # DesignSystem) on one OS only, using an `exclude:` entry.
+        package: [GoalKit, DesignSystem]
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
@@ -61,11 +75,11 @@ jobs:
       - name: Show simulator runtimes
         run: xcrun simctl list runtimes
       - name: Test on iOS Simulator
-        working-directory: Packages/GoalKit
+        working-directory: Packages/${{ matrix.package }}
         run: |
           set -o pipefail
           xcodebuild \
-            -scheme GoalKit \
+            -scheme ${{ matrix.package }} \
             -destination 'platform=iOS Simulator,name=iPhone 17,OS=${{ matrix.os }}' \
             -derivedDataPath build \
             test
