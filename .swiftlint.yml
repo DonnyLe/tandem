@@ -3,6 +3,8 @@ included:
   - MessagesExtension
   - Packages/GoalKit/Sources
   - Packages/GoalKit/Tests
+  - Packages/DesignSystem/Sources
+  - Packages/DesignSystem/Tests
 
 excluded:
   - build
