@@ -29,6 +29,10 @@ jobs:
   test:
     name: Build + test (${{ matrix.package }})
     runs-on: macos-26
+    # One job per local package, so the steps aren't copied for each package and
+    # each package gets its own check on the PR. fail-fast: false keeps one
+    # package's failure from cancelling the other's run. To add a package, add
+    # its folder name under Packages/ here and in ios-test below.
     strategy:
       fail-fast: false
       matrix:
@@ -57,6 +61,11 @@ jobs:
         # 26.2 is the oldest iOS runtime on the macos-26 image; 26.5 is the newest.
         # Both support Foundation Models (iOS 26+).
         os: ['26.2', '26.5']
+        # Every package runs on every OS above: 2 x 2 = 4 macOS jobs, each booting
+        # its own simulator. Minutes are free while the repo is public, but the
+        # free plan runs only about 5 macOS jobs at once, so extra jobs queue.
+        # If CI gets slow, test packages with no OS-specific behavior (like
+        # DesignSystem) on one OS only, using an `exclude:` entry.
         package: [GoalKit, DesignSystem]
     steps:
       - uses: actions/checkout@v4
